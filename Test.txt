@@ -1,0 +1,45 @@
+import requests
+import PyPDF2
+
+# Function to extract text from PDF
+def extract_pdf_text(pdf_path):
+    text = ""
+    with open(pdf_path, 'rb') as file:
+        reader = PyPDF2.PdfReader(file)
+        for page in reader.pages:
+            text += page.extract_text() + "\n"
+    return text
+
+# Function to send extracted text to OpenAI API
+def send_to_openai(text):
+    api_url = "https://api.openai.com/v1/chat/completions"
+    api_key = "YOUR_OPENAI_API_KEY"  # Replace with your OpenAI API key
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": "gpt-3.5-turbo",
+        "messages": [
+            {"role": "user", "content": text}
+        ]
+    }
+
+    response = requests.post(api_url, headers=headers, json=data)
+
+    if response.status_code == 200:
+        print("API Response:\n", response.json()['choices'][0]['message']['content'])
+    else:
+        print(f"Error {response.status_code}: {response.text}")
+
+# Main workflow
+if __name__ == "__main__":
+    pdf_content = extract_pdf_text("sample.pdf")
+
+    if pdf_content:
+        print("Extracted PDF Content:\n", pdf_content)
+        send_to_openai(pdf_content)
+    else:
+        print("No content extracted from PDF.")
